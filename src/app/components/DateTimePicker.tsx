@@ -6,16 +6,19 @@ import { convertTimeToUNIX } from "../helpers/unixHelpers";
 
 export default function DateTimePicker({
   setUnix,
+  defaultValue,
 }: {
-  setUnix: React.Dispatch<React.SetStateAction<number | undefined>>;
+  setUnix: React.Dispatch<React.SetStateAction<number>>;
+  defaultValue: Dayjs;
 }) {
-  const [date, setDate] = useState<Dayjs | null>(null);
-  const [time, setTime] = useState<Dayjs | null>(null);
-  const [debouncedTime, setDebouncedTime] = useState<Dayjs | null>(null);
-  const [dateRefresh, setDateRefresh] = useState<boolean>(false);
-  const [timeRefresh, setTimeRefresh] = useState<boolean>(false);
+  const [date, setDate] = useState<Dayjs>(defaultValue);
+  const [time, setTime] = useState<Dayjs>(defaultValue);
+  const [debouncedTime, setDebouncedTime] = useState<Dayjs>(defaultValue);
+  // const [dateRefresh, setDateRefresh] = useState<boolean>(false);
+  // const [timeRefresh, setTimeRefresh] = useState<boolean>(false);
 
   const handleDateChange = (newValue: Dayjs | null) => {
+    // console.log("newValue", newValue);
     if (!newValue) return;
     setDate((prevValue) => {
       /* console.log(
@@ -31,7 +34,7 @@ export default function DateTimePicker({
         convertTimeToUNIX(prevValue, dayjs(0)) !==
         convertTimeToUNIX(newValue, dayjs(0))
       ) {
-        setDateRefresh(true);
+        // setDateRefresh(true);
       }
       return newValue;
     });
@@ -44,7 +47,7 @@ export default function DateTimePicker({
         convertTimeToUNIX(dayjs(0), prevValue) !==
         convertTimeToUNIX(dayjs(0), newValue)
       ) {
-        setTimeRefresh(true);
+        // setTimeRefresh(true);
       }
       return newValue;
     });
@@ -58,12 +61,13 @@ export default function DateTimePicker({
   }, [time, 500]);
 
   useEffect(() => {
-    if (timeRefresh && dateRefresh) {
-      setUnix(convertTimeToUNIX(date, time));
-      // setTimeRefresh(false);
-      // setDateRefresh(false);
-    }
-  }, [timeRefresh, dateRefresh, date, time, setUnix]);
+    // if (timeRefresh && dateRefresh) {
+    setUnix(convertTimeToUNIX(date, time));
+    console.log("convertedUnix", convertTimeToUNIX(date, time));
+    // setTimeRefresh(false);
+    // setDateRefresh(false);
+    // }
+  }, [date, time, setUnix]);
 
   return (
     <>

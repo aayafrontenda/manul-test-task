@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -16,10 +16,10 @@ import DateTimePicker from "./components/DateTimePicker";
 import { convertTimeFromUNIX } from "./helpers/unixHelpers";
 import { useData } from "./context/DataContext";
 import { Interval } from "./Types/types";
+import ChartComponent from "./components/ChartComponent";
+import Chart from "./components/Chart";
 
-const ChartComponent = dynamic(() => import("./components/Chart"), {
-  ssr: false,
-});
+const LazyChart = lazy(() => import("./components/ChartComponent"));
 
 const theme = createTheme({
   palette: {
@@ -29,10 +29,10 @@ const theme = createTheme({
 });
 
 export default function FuelMonitor() {
-  const [startUnix, setStartUnix] = useState<number | undefined>(1693072800000);
+  const [startUnix, setStartUnix] = useState<number>(1693072800000);
   // 1693677518000
   // 1693072800000
-  const [endUnix, setEndUnix] = useState<number | undefined>(1693677599999);
+  const [endUnix, setEndUnix] = useState<number>(1693677599999);
   const [interval, setInterval] = useState<Interval>("day");
 
   useEffect(() => {
@@ -112,11 +112,17 @@ export default function FuelMonitor() {
                   className="ml-2 text-gray-500 text-2xl"
                 />
               </h4>
-              <DateTimePicker setUnix={setStartUnix} />
+              <DateTimePicker
+                setUnix={setStartUnix}
+                defaultValue={convertTimeFromUNIX(startUnix)}
+              />
             </div>
             <FontAwesomeIcon icon={faArrowRight} className="text-2xl" />
             <div className="flex gap-4 m-0 p-0 items-center">
-              <DateTimePicker setUnix={setEndUnix} />
+              <DateTimePicker
+                setUnix={setEndUnix}
+                defaultValue={convertTimeFromUNIX(endUnix)}
+              />
               <h4 className="text-xl font-medium">
                 <FontAwesomeIcon
                   icon={faFlagCheckered}
@@ -125,7 +131,7 @@ export default function FuelMonitor() {
               </h4>
             </div>
           </div>
-          <ChartComponent
+          <Chart
             timeStampBegin={startUnix}
             timeStampEnd={endUnix}
             interval={interval}
