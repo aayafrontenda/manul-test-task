@@ -3,6 +3,7 @@ import { DatePicker, TimeField } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import React, { useState, useEffect } from "react";
 import { convertTimeToUNIX } from "../helpers/unixHelpers";
+import debounce from "@/app/helpers/debounce";
 
 export default function DateTimePicker({
   setUnix,
@@ -13,10 +14,8 @@ export default function DateTimePicker({
 }) {
   const [date, setDate] = useState<Dayjs>(defaultValue);
   const [time, setTime] = useState<Dayjs>(defaultValue);
-  const [debouncedTime, setDebouncedTime] = useState<Dayjs>(defaultValue);
   // const [dateRefresh, setDateRefresh] = useState<boolean>(false);
   // const [timeRefresh, setTimeRefresh] = useState<boolean>(false);
-
   const handleDateChange = (newValue: Dayjs | null) => {
     // console.log("newValue", newValue);
     if (!newValue) return;
@@ -40,7 +39,7 @@ export default function DateTimePicker({
     });
   };
 
-  const handleTimeChange = (newValue: Dayjs | null) => {
+  function handleTimeChange(newValue: Dayjs | null) {
     if (!newValue) return;
     setTime((prevValue) => {
       if (
@@ -51,19 +50,15 @@ export default function DateTimePicker({
       }
       return newValue;
     });
-  };
+  }
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setDebouncedTime(time);
-    }, 500);
-    return () => clearTimeout(timeoutId);
-  }, [time, 500]);
+  const debounceHandleDateChange = debounce(handleDateChange, 2000);
+  const debounceHandleTimeChange = debounce(handleTimeChange, 2000);
 
   useEffect(() => {
     // if (timeRefresh && dateRefresh) {
     setUnix(convertTimeToUNIX(date, time));
-    console.log("convertedUnix", convertTimeToUNIX(date, time));
+    // console.log("convertedUnix", convertTimeToUNIX(date, time));
     // setTimeRefresh(false);
     // setDateRefresh(false);
     // }
@@ -73,11 +68,11 @@ export default function DateTimePicker({
     <>
       <DatePicker
         value={dayjs(date)}
-        onChange={(newValue) => handleDateChange(newValue)}
+        onChange={(newValue) => debounceHandleDateChange(newValue)}
       />
       <TimeField
         value={dayjs(time)}
-        onChange={(newValue) => handleTimeChange(newValue)}
+        onChange={(newValue) => debounceHandleTimeChange(newValue)}
       />
     </>
   );

@@ -2,14 +2,14 @@ import dayjs, { Dayjs } from "dayjs";
 
 export function convertTimeToUNIX(date: Dayjs | null, time: Dayjs | null) {
   if (!date || !time) return -1;
-  console.log("date", date);
-  console.log("time", time);
+  // console.log("date", date);
+  // console.log("time", time);
   let result = date
     .minute(0)
     .hour(0)
     .add(time.hour(), "hours")
     .add(time.minute(), "minutes");
-  console.log("result", result);
+  // console.log("result", result);
   return result.unix() * 1000;
 }
 

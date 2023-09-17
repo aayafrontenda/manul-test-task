@@ -63,7 +63,7 @@ export default function FuelMonitor() {
             </span>
             <div className="ml-auto p-1 rounded-xl bg-gray-200 flex gap-1">
               <button
-                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 ${
+                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 transition-all duration-200 ${
                   interval === "day" ? "bg-white text-gray-800" : ""
                 }`}
                 onClick={() => setInterval("day")}
@@ -71,7 +71,7 @@ export default function FuelMonitor() {
                 По дням
               </button>
               <button
-                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 ${
+                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 transition-all duration-200 ${
                   interval === "week" ? "bg-white text-gray-800" : ""
                 }`}
                 onClick={() => setInterval("week")}
@@ -79,7 +79,7 @@ export default function FuelMonitor() {
                 По неделям
               </button>
               <button
-                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 ${
+                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 transition-all duration-200 ${
                   interval === "month" ? "bg-white text-gray-800" : ""
                 }`}
                 onClick={() => setInterval("month")}
@@ -87,7 +87,7 @@ export default function FuelMonitor() {
                 По месяцам
               </button>
               <button
-                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 ${
+                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 transition-all duration-200 ${
                   interval === "year" ? "bg-white text-gray-800" : ""
                 }`}
                 onClick={() => setInterval("year")}
@@ -95,7 +95,7 @@ export default function FuelMonitor() {
                 По годам
               </button>
               <button
-                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 ${
+                className={`p-4 rounded-xl hover:bg-white hover:text-gray-800 font-bold text-gray-600 transition-all duration-200 ${
                   interval === "all" ? "bg-white text-gray-800" : ""
                 }`}
                 onClick={() => setInterval("all")}

@@ -9,24 +9,27 @@ import * as am5 from "@amcharts/amcharts5";
 import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import { FuelRecord, Interval, IntervalData } from "../Types/types";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHourglass } from "@fortawesome/free-solid-svg-icons";
 import { convertTimeFromUNIX, convertTimeToUNIX } from "../helpers/unixHelpers";
 import { useData } from "../context/DataContext";
 import dayjs, { Dayjs } from "dayjs";
 import { getWeek } from "@amcharts/amcharts5/.internal/core/util/Utils";
+import axios from "axios";
 
 const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь",
 ];
 
 function Chart({
@@ -40,25 +43,39 @@ function Chart({
 }) {
   // const [data, setData] = useState([]);
   const { data, setData } = useData();
+  const [loading, setLoading] = useState<boolean>(true);
   let intervalData = useRef<Record<string, IntervalData>>({});
   useEffect(() => {
-    fetch(
-      `http://188.94.158.122:8080/transporttelemetry/get/coordsOverTime?rigId=36&timeStampBegin=${timeStampBegin}&timeStampEnd=${timeStampEnd}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "manul/test",
-        },
-      }
-    )
-      .then((response) => response.json()) // Convert response to JSON
-      .then((data) => setData(data)); // Log the JSON data
+    setLoading(true);
+    axios
+      .get(
+        `http://188.94.158.122:8080/transporttelemetry/get/coordsOverTime?rigId=36&timeStampBegin=${timeStampBegin}&timeStampEnd=${timeStampEnd}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "manul/test",
+          },
+          timeout: 30000,
+        }
+      )
+      .then((response) => {
+        setData(response.data); // Set the data using the Axios response
+        setLoading(false);
+      })
+      .catch((error) => {
+        // Handle errors here
+        console.error("Axios Error:", error);
+      });
   }, [setData, timeStampBegin, timeStampEnd]);
+  // In this code, we've replaced the fetch call with an Axios get request, and we've also added error handling using the .catch method. Axios simplifies working with HTTP requests and responses and is a popular choice for making HTTP requests in JavaScript applications. Make sure you have Axios installed in your project before using it. You can install Axios using npm or yarn:
 
   useEffect(() => {
-    // console.log("timeStampBegin", timeStampBegin);
+    console.log("timeStampBegin", timeStampBegin);
   }, [timeStampBegin]);
+
+  useEffect(() => {
+    console.log("timeStampEnd", timeStampEnd);
+  }, [timeStampEnd]);
 
   useEffect(() => {
     console.log("interval", interval);
@@ -202,36 +219,14 @@ function Chart({
 
     let chart = root.container.children.push(
       am5xy.XYChart.new(root, {
-        panY: false,
+        panX: true,
+        panY: true,
+        wheelX: "panX",
+        wheelY: "zoomX",
+        pinchZoomX: true,
         layout: root.verticalLayout,
       })
     );
-
-    let hourglass;
-    setTimeout(() => {
-      hourglass = indicator.children.push(
-        am5.Graphics.new(root, {
-          width: 32,
-          height: 32,
-          fill: am5.color(0x000000),
-          x: am5.p50,
-          y: am5.p50,
-          centerX: am5.p50,
-          centerY: am5.p50,
-          dy: -45,
-          svgPath:
-            "M12 5v10l9 9-9 9v10h24V33l-9-9 9-9V5H12zm20 29v5H16v-5l8-8 8 8zm-8-12-8-8V9h16v5l-8 8z",
-        })
-      );
-
-      var hourglassanimation = hourglass.animate({
-        key: "rotation",
-        to: 180,
-        loops: Infinity,
-        duration: 2000,
-        easing: am5.ease.inOut(am5.ease.cubic),
-      });
-    }, 500);
 
     let dataSet;
     if (interval === "all") {
@@ -250,7 +245,7 @@ function Chart({
         const record = intervalData.current[key];
         return {
           /*
-        category: convertTimeFromUNIX(Fuelrecord.timeStart).format(
+          category: convertTimeFromUNIX(Fuelrecord.timeStart).format(
           "DD/MM HH:mm"
         ),
         */
@@ -270,17 +265,42 @@ function Chart({
     );
 
     // Create X-Axis
+    let xRenderer = am5xy.AxisRendererX.new(root, {});
 
+    xRenderer.grid.template.set("location", 1);
     let xAxis = chart.xAxes.push(
       am5xy.CategoryAxis.new(root, {
-        renderer: am5xy.AxisRendererX.new(root, {}),
+        renderer: xRenderer,
         categoryField: "category",
       })
     );
 
     xAxis.data.setAll(dataSet);
 
-    const names = ["Топливо 1", "Топливо 2", "Топливо 1 + Топливо 2"];
+    let resizeButtons: am5.Button[] = [];
+    for (let i = 0; i < 3; i++) {
+      let resizeButton = am5.Button.new(root, {
+        themeTags: ["resize", "horizontal"],
+        icon: am5.Graphics.new(root, {
+          themeTags: ["icon"],
+        }),
+      });
+
+      // restrict from being dragged vertically
+      resizeButton.adapters.add("y", function () {
+        return 0;
+      });
+
+      // restrict from being dragged outside of plot
+      resizeButton.adapters.add("x", function (x) {
+        if (!x) return -1;
+        return Math.max(0, Math.min(chart.plotContainer.width(), Number(x)));
+      });
+
+      resizeButtons.push(resizeButton);
+    }
+
+    const names = ["Топливо 1", "Топливо 2", "Общий уровень"];
 
     for (let i = 0; i < 3; i++) {
       const series = chart.series.push(
@@ -290,6 +310,76 @@ function Chart({
           yAxis: yAxis,
           valueYField: `value${i + 1}`,
           categoryXField: "category",
+          tooltip: am5.Tooltip.new(root, {
+            labelText: `${names[i]}: {valueY}`,
+          }),
+        })
+      );
+
+      let seriesRangeDataItem = xAxis.makeDataItem({});
+      let seriesRange = series.createAxisRange(seriesRangeDataItem);
+      seriesRange.fills?.template.setAll({
+        visible: true,
+        opacity: 0.3,
+      });
+      // seriesRangeDataItem.set("category", xAxis.dataItems[0]?.get("category"));
+      // seriesRangeDataItem.set(
+      // "endCategory",
+      // xAxis.dataItems[xAxis.dataItems.length - 1]?.get("category")
+      // );
+
+      seriesRange.fills?.template.set(
+        "fillPattern",
+        am5.LinePattern.new(root, {
+          color: am5.color(0x00ff00),
+          rotation: 45,
+          strokeWidth: 2,
+          width: 2000,
+          height: 2000,
+          fill: am5.color(0xffffff),
+        })
+      );
+
+      seriesRange.strokes?.template.set("stroke", am5.color(0x00ff00));
+
+      chart.set(
+        "scrollbarX",
+        am5.Scrollbar.new(root, {
+          orientation: "horizontal",
+        })
+      );
+
+      let range = xAxis.createAxisRange(xAxis.makeDataItem({}));
+      let color = root.interfaceColors.get("primaryButton");
+
+      range.get("grid")?.setAll({
+        strokeOpacity: 1,
+        stroke: color,
+        location: 0,
+      });
+
+      resizeButtons[i].events.on("dragged", function () {
+        let x = resizeButtons[i].x();
+        let position = xAxis.toAxisPosition(x / chart.plotContainer.width());
+
+        let context = xAxis.getSeriesItem(series, position)?.dataContext as
+          | { category: string }
+          | undefined;
+        let value = context?.category;
+        // console.log("value: ", value);
+
+        range.set("category", value?.toString());
+        seriesRangeDataItem.set("category", value?.toString());
+        seriesRangeDataItem.set(
+          "endCategory",
+          xAxis.dataItems[xAxis.dataItems.length - 1].get("category")
+        );
+      });
+
+      range.set(
+        "bullet",
+        am5xy.AxisBullet.new(root, {
+          sprite: resizeButtons[i],
         })
       );
 
@@ -318,65 +408,19 @@ function Chart({
       });
       series.data.setAll(dataSet);
     }
-    /*
-      series.bullets.push(function (root) {
-        return am5.Bullet.new(root, {
-          sprite: am5.Circle.new(root, {
-            radius: 1,
-            fill: series.get("fill"),
-          }),
-        });
-      });
-    
-    */
-    // Create series
-    /* let series1 = chart.series.push(
-      am5xy.SmoothedXLineSeries.new(root, {
-        name: "Series",
-        xAxis: xAxis,
-        yAxis: yAxis,
-        valueYField: "value1",
-        categoryXField: "category",
-      })
-    );
-    series1.data.setAll(dataSet);
 
-    let series2 = chart.series.push(
-      am5xy.SmoothedXLineSeries.new(root, {
-        name: "Series",
-        xAxis: xAxis,
-        yAxis: yAxis,
-        valueYField: "value2",
-        categoryXField: "category",
-    })
-    );
-    series2.data.setAll(dataSet);
-    
-    series2.bullets.push(function (root) {
-        return am5.Bullet.new(root, {
-            sprite: am5.Circle.new(root, {
-          radius: 1,
-          fill: series2.get("fill"),
-        }),
-      });
-    });
-
-    series1.bullets.push(function (root) {
-      return am5.Bullet.new(root, {
-        sprite: am5.Circle.new(root, {
-          radius: 1,
-          fill: series1.get("fill"),
-        }),
-    });
-    });
-    */
-    // am5core.options.onlyShowOnViewport = true;
-    // Add legend
     let legend = chart.children.push(am5.Legend.new(root, {}));
     legend.data.setAll(chart.series.values);
 
     // Add cursor
-    chart.set("cursor", am5xy.XYCursor.new(root, {}));
+    chart.set(
+      "cursor",
+      am5xy.XYCursor.new(root, {
+        behavior: "zoomX",
+        xAxis: xAxis,
+      })
+    );
+
     let indicator = root.container.children.push(
       am5.Container.new(root, {
         width: am5.p100,
@@ -388,16 +432,54 @@ function Chart({
         }),
       })
     );
-
     am5.ready(function () {
       indicator.hide();
     });
 
+    let hourglass;
+    setTimeout(() => {
+      hourglass = indicator.children.push(
+        am5.Graphics.new(root, {
+          width: 32,
+          height: 32,
+          fill: am5.color(0x000000),
+          x: am5.p50,
+          y: am5.p50,
+          centerX: am5.p50,
+          centerY: am5.p50,
+          dy: -45,
+          svgPath:
+            "M12 5v10l9 9-9 9v10h24V33l-9-9 9-9V5H12zm20 29v5H16v-5l8-8 8 8zm-8-12-8-8V9h16v5l-8 8z",
+        })
+      );
+
+      var hourglassanimation = hourglass.animate({
+        key: "rotation",
+        to: 180,
+        loops: Infinity,
+        duration: 2000,
+        easing: am5.ease.inOut(am5.ease.cubic),
+      });
+    }, 500);
     return () => {
       root.dispose();
     };
   }, [data, interval]);
 
-  return <div id="chartdiv" className="w-full h-[300px]"></div>;
+  return (
+    <div className="relative">
+      <div
+        id="chartdiv"
+        className={`w-full h-[400px] ${loading ? "opacity-50" : ""}`}
+      ></div>
+      {loading && (
+        <div className="h-full w-full absolute top-[50%] left-[50%] text-3xl z-10">
+          <div className="animate-pulse">
+            <FontAwesomeIcon icon={faHourglass} className="animate-spin" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 export default Chart;
