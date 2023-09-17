@@ -20,12 +20,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <meta
-          http-equiv="Content-Security-Policy"
-          content="upgrade-insecure-requests"
-        />
-      </head>
       <DataProvider>
         <body
           className={`${inter.className} flex flex-col justify-center p-4 lg:p-8 w-full h-full bg-gray-100 overflow-x-hidden`}
