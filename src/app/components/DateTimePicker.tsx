@@ -14,27 +14,9 @@ export default function DateTimePicker({
 }) {
   const [date, setDate] = useState<Dayjs>(defaultValue);
   const [time, setTime] = useState<Dayjs>(defaultValue);
-  // const [dateRefresh, setDateRefresh] = useState<boolean>(false);
-  // const [timeRefresh, setTimeRefresh] = useState<boolean>(false);
   const handleDateChange = (newValue: Dayjs | null) => {
-    // console.log("newValue", newValue);
     if (!newValue) return;
     setDate((prevValue) => {
-      /* console.log(
-        "convertTimeToUNIX(prevValue, null)",
-        convertTimeToUNIX(prevValue, dayjs(0))
-      );
-      console.log(
-        "convertTimeToUNIX(newValue, null)",
-        convertTimeToUNIX(newValue, dayjs(0))
-      );
-      */
-      if (
-        convertTimeToUNIX(prevValue, dayjs(0)) !==
-        convertTimeToUNIX(newValue, dayjs(0))
-      ) {
-        // setDateRefresh(true);
-      }
       return newValue;
     });
   };
@@ -42,12 +24,6 @@ export default function DateTimePicker({
   function handleTimeChange(newValue: Dayjs | null) {
     if (!newValue) return;
     setTime((prevValue) => {
-      if (
-        convertTimeToUNIX(dayjs(0), prevValue) !==
-        convertTimeToUNIX(dayjs(0), newValue)
-      ) {
-        // setTimeRefresh(true);
-      }
       return newValue;
     });
   }
@@ -56,12 +32,7 @@ export default function DateTimePicker({
   const debounceHandleTimeChange = debounce(handleTimeChange, 2000);
 
   useEffect(() => {
-    // if (timeRefresh && dateRefresh) {
     setUnix(convertTimeToUNIX(date, time));
-    // console.log("convertedUnix", convertTimeToUNIX(date, time));
-    // setTimeRefresh(false);
-    // setDateRefresh(false);
-    // }
   }, [date, time, setUnix]);
 
   return (

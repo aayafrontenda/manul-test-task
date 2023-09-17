@@ -1,5 +1,4 @@
 "use client";
-import { data } from "autoprefixer";
 import { createContext, useContext, useState } from "react";
 import { DataContextType, DataProviderProps, FuelRecord } from "../Types/types";
 

@@ -10,7 +10,7 @@ import * as am5xy from "@amcharts/amcharts5/xy";
 import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
 import { FuelRecord, Interval, IntervalData } from "../Types/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHourglass } from "@fortawesome/free-solid-svg-icons";
+import { faHourglass, faBug } from "@fortawesome/free-solid-svg-icons";
 import { convertTimeFromUNIX, convertTimeToUNIX } from "../helpers/unixHelpers";
 import { useData } from "../context/DataContext";
 import dayjs, { Dayjs } from "dayjs";
@@ -46,6 +46,8 @@ function Chart({
   const [loading, setLoading] = useState<boolean>(true);
   let intervalData = useRef<Record<string, IntervalData>>({});
   useEffect(() => {
+    if (!timeStampBegin || !timeStampEnd) return;
+    if (timeStampBegin > timeStampEnd) return;
     setLoading(true);
     axios
       .get(
@@ -59,15 +61,13 @@ function Chart({
         }
       )
       .then((response) => {
-        setData(response.data); // Set the data using the Axios response
+        setData(response.data);
         setLoading(false);
       })
       .catch((error) => {
-        // Handle errors here
         console.error("Axios Error:", error);
       });
   }, [setData, timeStampBegin, timeStampEnd]);
-  // In this code, we've replaced the fetch call with an Axios get request, and we've also added error handling using the .catch method. Axios simplifies working with HTTP requests and responses and is a popular choice for making HTTP requests in JavaScript applications. Make sure you have Axios installed in your project before using it. You can install Axios using npm or yarn:
 
   useEffect(() => {
     console.log("timeStampBegin", timeStampBegin);
@@ -106,7 +106,6 @@ function Chart({
       });
     } else if (interval === "week") {
       intervalData.current = {};
-      // console.log("here");
       data.forEach((fuelRecord) => {
         const year = convertTimeFromUNIX(fuelRecord.timeStart).year();
         const weekOfTheYear = getWeek(
@@ -124,7 +123,6 @@ function Chart({
           .add(weekOfTheYear - 1, "week")
           .add(7, "day")
           .toDate();
-        // console.log("weekOfYear", weekOfTheYear);
         if (!intervalData.current[weekOfTheYear]) {
           intervalData.current[weekOfTheYear] = {
             interval: `${dayjs(firstWeekDay).format("DD/MM/YYYY")}-${dayjs(
@@ -152,7 +150,6 @@ function Chart({
       data.forEach((fuelRecord) => {
         const date = convertTimeFromUNIX(fuelRecord.timeStart);
         const monthOfTheYear = `${months[date.month()]} ${date.year()}`;
-        // console.log("weekOfYear", weekOfTheYear);
         if (!intervalData.current[monthOfTheYear]) {
           intervalData.current[monthOfTheYear] = {
             interval: monthOfTheYear,
@@ -244,11 +241,6 @@ function Chart({
       dataSet = Object.keys(intervalData.current as Object).map((key) => {
         const record = intervalData.current[key];
         return {
-          /*
-          category: convertTimeFromUNIX(Fuelrecord.timeStart).format(
-          "DD/MM HH:mm"
-        ),
-        */
           category: record.interval,
           value1: record.fuel1Sum / record.fuel1Count,
           value2: record.fuel2Sum / record.fuel2Count,
@@ -322,11 +314,6 @@ function Chart({
         visible: true,
         opacity: 0.3,
       });
-      // seriesRangeDataItem.set("category", xAxis.dataItems[0]?.get("category"));
-      // seriesRangeDataItem.set(
-      // "endCategory",
-      // xAxis.dataItems[xAxis.dataItems.length - 1]?.get("category")
-      // );
 
       seriesRange.fills?.template.set(
         "fillPattern",
@@ -467,17 +454,30 @@ function Chart({
   }, [data, interval]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <div
         id="chartdiv"
         className={`w-full h-[400px] ${loading ? "opacity-50" : ""}`}
       ></div>
       {loading && (
-        <div className="h-full w-full absolute top-[50%] left-[50%] text-3xl z-10">
-          <div className="animate-pulse">
-            <FontAwesomeIcon icon={faHourglass} className="animate-spin" />
+        <div className="h-full w-full absolute top-[35%] text-3xl z-10">
+          <div className="flex justify-center items-center">
+            <div className="animate-pulse">
+              <FontAwesomeIcon icon={faHourglass} className="animate-spin" />
+            </div>
           </div>
         </div>
+      )}
+      {!loading && data.length === 0 ? (
+        <div className="h-full w-full absolute top-[35%] text-2xl">
+          <div className="flex flex-col justify-center items-center">
+            <p>Запрос занял слишком много времени</p>
+            <p>Пожалуйста попробуйте еще раз!</p>
+            <FontAwesomeIcon icon={faBug} />
+          </div>
+        </div>
+      ) : (
+        <></>
       )}
     </div>
   );
